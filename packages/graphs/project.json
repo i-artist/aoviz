@@ -1,0 +1,42 @@
+{
+  "root": "packages/graphs",
+  "sourceRoot": "packages/graphs/src",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:swc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/graphs",
+        "main": "packages/graphs/src/index.ts",
+        "tsConfig": "packages/graphs/tsconfig.lib.json",
+        "assets": [
+          "packages/graphs/*.md"
+        ]
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "packages/graphs/**/*.ts"
+        ]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": [
+        "coverage/packages/graphs"
+      ],
+      "options": {
+        "jestConfig": "packages/graphs/jest.config.ts",
+        "passWithNoTests": true
+      }
+    }
+  },
+  "tags": []
+}

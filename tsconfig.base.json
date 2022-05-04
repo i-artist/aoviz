@@ -13,8 +13,11 @@
     "lib": ["es2017", "dom"],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
+    "noImplicitAny": false,
     "baseUrl": ".",
-    "paths": {}
+    "paths": {
+      "@aoviz/graphs": ["packages/graphs/src/index.ts"]
+    }
   },
   "exclude": ["node_modules", "tmp"]
 }

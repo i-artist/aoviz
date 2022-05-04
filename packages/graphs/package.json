@@ -1,0 +1,15 @@
+{
+  "name": "@aoviz/graphs",
+  "version": "0.0.1",
+  "type": "module",
+  "dependencies": {
+    "d3": "^7.4.4",
+    "lodash-es": "^4.17.21",
+    "rxjs": "^7.5.5"
+  },
+  "devDependencies": {
+    "@types/d3": "^7.1.0",
+    "@types/lodash-es": "^4.17.6",
+    "@swc/helpers": "~0.3.3"
+  }
+}
