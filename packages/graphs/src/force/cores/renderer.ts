@@ -1,6 +1,6 @@
 import { zoomIdentity, ZoomTransform } from 'd3-zoom';
 import { ELinkShape, IPoint, IRenderData } from '../interface';
-import { IRenderLink, IRenderNode, IOption, ISafeAny } from '../interface';
+import { IRenderLink, IRenderNode, IOption } from '../interface';
 import { distance, getCircleCenterByPoints, getCirclePointByArc, getRectPointsByCenterPoint, rotatePoints } from '../utils/math';
 
 export class Renderer {
@@ -45,7 +45,7 @@ export class Renderer {
     if (link.cfg.shape === ELinkShape.Arc) {
       this.drawArcLink(link);
     }
-    if(link.cfg.shape === ELinkShape.Self){
+    if (link.cfg.shape === ELinkShape.Self) {
       this.drawSelfLink(link);
     }
   }
@@ -73,27 +73,18 @@ export class Renderer {
     const arcCenterPoint = getCircleCenterByPoints(link.source, arcPoint, link.target);
     const arcRadius = distance(link.source.x, link.source.y, arcCenterPoint.x, arcCenterPoint.y);
     // 计算出 source 和 target 的圆心和与弧线相交边的偏移量
-    let sAngel = Math.atan2(link.source.y - arcCenterPoint.y, link.source.x - arcCenterPoint.x);
-    let tAngle = Math.atan2(link.target.y - arcCenterPoint.y, link.target.x - arcCenterPoint.x);
-    sAngel = (sAngel + Math.PI * 2) % (Math.PI * 2);
-    tAngle = (tAngle + Math.PI * 2) % (Math.PI * 2);
-    if (link._offsetMultiple < 0) {
-      if (sAngel < tAngle) {
-        sAngel += Math.PI * 2;
-      }
-    }
+    const sAngel = Math.atan2(link.source.y - arcCenterPoint.y, link.source.x - arcCenterPoint.x);
+    const tAngle = Math.atan2(link.target.y - arcCenterPoint.y, link.target.x - arcCenterPoint.x);
     const startAngel = sAngel + (sourceRadiusOffset / arcRadius) * Math.sign(link._offsetMultiple);
     const endAngel = tAngle - (targetRadiusOffset / arcRadius) * Math.sign(link._offsetMultiple);
-    let _startAngel = startAngel;
-    let _endAngel = endAngel;
-    if (link._offsetMultiple < 0 && startAngel > endAngel) {
-      _startAngel = endAngel;
-      _endAngel = startAngel;
-    }
+    // 绘制方向为 true 时，逆时针
+    const anticlockwise = link._offsetMultiple < 0
+    
     context.beginPath();
-    context.arc(arcCenterPoint.x, arcCenterPoint.y, arcRadius, _startAngel, _endAngel);
+    context.arc(arcCenterPoint.x, arcCenterPoint.y, arcRadius, startAngel, endAngel, anticlockwise );
     context.strokeStyle = cfg.stroke;
     context.stroke();
+
     const endPoint = getCirclePointByArc(arcCenterPoint.x, arcCenterPoint.y, arcRadius, endAngel);
     const arrowAngle = Math.atan2(link.target.y - endPoint.y, link.target.x - endPoint.x);
     this.drawLinkLabel(arcPoint, linkAngle, link);

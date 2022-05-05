@@ -1,6 +1,6 @@
 {
   "name": "@aoviz/graphs",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "type": "module",
   "keywords": [
     "aoviz",
@@ -17,6 +17,7 @@
     "type": "git",
     "url": "https://github.com/i-artist/aoviz"
   },
+  "license": "MIT",
   "dependencies": {
     "d3": "^7.4.4",
     "lodash-es": "^4.17.21",
