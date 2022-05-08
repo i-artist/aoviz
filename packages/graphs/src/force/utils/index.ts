@@ -2,11 +2,11 @@ import { cloneDeep, isNumber, merge } from 'lodash-es';
 import { DEFAULT_OPTION } from '../config';
 import { ELinkShape, IForceData, ILink, ILinkCfg, INodeCfg, IPoint, ISafeAny } from '../interface';
 import { IRenderNode } from '../interface';
-import { isInsideCircle } from './math';
+import { isPointInCircle } from './math';
 
 export function getNodeByPoint(nodes: IRenderNode[], point: IPoint) {
   for (const node of nodes) {
-    const isInside = isInsideCircle(node.x || 0, node.y || 0, node?.cfg?.radius || 20, point.x, point.y);
+    const isInside = isPointInCircle(node.x || 0, node.y || 0, node?.cfg?.radius || 20, point.x, point.y);
     if (isInside) return node;
   }
   return null;

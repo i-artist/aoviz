@@ -1,15 +1,19 @@
 import { zoomIdentity, ZoomTransform } from 'd3-zoom';
-import { ELinkShape, IPoint, IRenderData } from '../interface';
+import { ECollectorShape, ELinkShape, ICollector, ECollectorType, IPoint, IRenderData } from '../interface';
 import { IRenderLink, IRenderNode, IOption } from '../interface';
 import { distance, getCircleCenterByPoints, getCirclePointByArc, getRectPointsByCenterPoint, rotatePoints } from '../utils/math';
+import { Event } from './event';
 
 export class Renderer {
   context: CanvasRenderingContext2D;
   option: IOption;
   transform = zoomIdentity;
-  constructor(context: CanvasRenderingContext2D, option: IOption) {
+  event: Event;
+  collectors: ICollector[] = [];
+  constructor(context: CanvasRenderingContext2D, option: IOption, event: Event) {
     this.context = context;
     this.option = option;
+    this.event = event;
   }
   setContext(context: CanvasRenderingContext2D) {
     this.context = context;
@@ -23,6 +27,7 @@ export class Renderer {
   draw(data: IRenderData) {
     const { context, option, transform } = this;
     const { width = 0, height = 0 } = option.layout;
+    this.collectors = [];
     context.save();
     context.textAlign = 'center';
     context.textBaseline = 'middle';
@@ -36,6 +41,7 @@ export class Renderer {
       this.drawNode(node);
     });
     context.restore();
+    this.event.collectors = this.collectors;
   }
 
   drawLink(link: IRenderLink) {
@@ -78,10 +84,10 @@ export class Renderer {
     const startAngel = sAngel + (sourceRadiusOffset / arcRadius) * Math.sign(link._offsetMultiple);
     const endAngel = tAngle - (targetRadiusOffset / arcRadius) * Math.sign(link._offsetMultiple);
     // 绘制方向为 true 时，逆时针
-    const anticlockwise = link._offsetMultiple < 0
-    
+    const anticlockwise = link._offsetMultiple < 0;
+
     context.beginPath();
-    context.arc(arcCenterPoint.x, arcCenterPoint.y, arcRadius, startAngel, endAngel, anticlockwise );
+    context.arc(arcCenterPoint.x, arcCenterPoint.y, arcRadius, startAngel, endAngel, anticlockwise);
     context.strokeStyle = cfg.stroke;
     context.stroke();
 
@@ -161,7 +167,7 @@ export class Renderer {
     context.font = `${cfg.label.fontSize}px ${cfg.label.fontWeight} ${cfg.label.fontFamily}`;
     const text = this.dealText(context, link.name, cfg.label.width);
     const textWidth = context.measureText(text).width + 4;
-    this.drawLinkLabelBg(point, textWidth, cfg.label.fontSize, angle);
+    this.drawLinkLabelBg(point, textWidth, cfg.label.fontSize, angle, link);
     context.fillStyle = cfg.label.backgroundColor;
     context.fill();
     // 避免出现字体反转后是反着的情况
@@ -185,6 +191,12 @@ export class Renderer {
     context.fill();
     context.fillStyle = cfg.label.color;
     this.drawNodeLabel({ x: node.x || 0, y: (node.y || 0) + cfg.radius + offset }, node);
+    this.collectors.unshift({
+      type: ECollectorType.NodeLabel,
+      shape: ECollectorShape.Circle,
+      model: { x: node.x || 0, y: node.y || 0, r: cfg.radius },
+      data: node,
+    });
   }
 
   drawNodeLabel(point: IPoint, node: IRenderNode) {
@@ -201,6 +213,7 @@ export class Renderer {
     context.fill();
     context.fillStyle = cfg.label.color;
     context.fillText(text, point.x, point.y, textWidth);
+    this.collectors.unshift({ type: ECollectorType.NodeLabel, shape: ECollectorShape.Rect, model: { points }, data: node });
   }
 
   /**
@@ -210,7 +223,7 @@ export class Renderer {
    * @param height 需要绘制的背景高度
    * @param radians
    */
-  drawLinkLabelBg(point: IPoint, width: number, height: number, radians: number) {
+  drawLinkLabelBg(point: IPoint, width: number, height: number, radians: number, link: IRenderLink) {
     const { context } = this;
     const points = getRectPointsByCenterPoint(point, width, height);
     const realPoints = rotatePoints(points, point, radians);
@@ -220,6 +233,7 @@ export class Renderer {
     context.lineTo(realPoints[2].x, realPoints[2].y);
     context.lineTo(realPoints[3].x, realPoints[3].y);
     context.closePath();
+    this.collectors.push({ type: ECollectorType.LinkLabel, shape: ECollectorShape.Rect, model: { points }, data: link });
   }
 
   // 文本超出超度显示省略号计算，使用二分法

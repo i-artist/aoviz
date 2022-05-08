@@ -86,3 +86,38 @@ export enum ELinkShape {
   Arc = 'arc',
   Self = 'self',
 }
+
+export type ICollector = IArcCollector | IPolygonCollector;
+
+export interface IArcCollector {
+  shape: ECollectorShape.Arc | ECollectorShape.Circle;
+  type: ECollectorType;
+  model: { x: number; y: number; r: number; startAngle?: number; endAngle?: number };
+  data: IRenderNode | IRenderLink;
+}
+
+export interface IPolygonCollector {
+  shape: ECollectorShape.Polygon | ECollectorShape.Rect;
+  type: ECollectorType;
+  model: { points: IPoint[] };
+  data: IRenderNode | IRenderLink;
+}
+
+export enum ECollectorType {
+  LinkLabel = 'linkLabel',
+  NodeLabel = 'nodeLabel',
+  Node = 'node',
+  Link = 'link',
+}
+
+export enum ECollectorShape {
+  Arc = 'arc',
+  Circle = 'circle',
+  Rect = 'rect',
+  Polygon = 'polygon',
+}
+
+export interface INodeDragEvent {
+  data: IRenderNode;
+  type: 'dragstart' | 'dragging' | 'dragend';
+}

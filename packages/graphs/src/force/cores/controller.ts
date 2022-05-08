@@ -4,6 +4,7 @@ import { throttleTime } from 'rxjs/operators';
 import { IForceData, ILayoutForceOption, IRenderNode, IOption, ISafeAny, IRenderData, ILink } from '../interface';
 import { ForceLayout } from '../layout';
 import { Renderer } from './renderer';
+import { Event } from './event';
 import { getNodeByPoint, updateLinkOffsetMultiple } from '../utils';
 import { IPoint } from '../interface';
 
@@ -15,6 +16,7 @@ export class Controller {
   option!: IOption;
   transform = zoomIdentity;
   zoom!: ZoomBehavior<HTMLCanvasElement, unknown>;
+  event!: Event;
   get tick$() {
     return this.layout.tick$;
   }
@@ -28,6 +30,7 @@ export class Controller {
     this.wrapper = wrapper as HTMLElement;
     this.option = option;
     this.initCanvas();
+    this.initEvent();
     this.initRenderer();
     this.initLayout();
     this.initDrag();
@@ -60,7 +63,7 @@ export class Controller {
       return;
     }
     context.imageSmoothingEnabled = true;
-    this.renderer = new Renderer(context, this.option);
+    this.renderer = new Renderer(context, this.option, this.event);
   }
 
   initDrag() {
@@ -82,15 +85,18 @@ export class Controller {
           if (!ev.active) {
             this.layout.simulation.alphaTarget(0.3).restart();
           }
+          this.event.onNodeDrag$.next({ data: ev.subject, type: 'dragstart' });
           updateDragNodeCoordinates(ev.subject, { x: ev.x, y: ev.y });
         })
         .on('drag', (ev) => {
+          this.event.onNodeDrag$.next({ data: ev.subject, type: 'dragging' });
           updateDragNodeCoordinates(ev.subject, { x: ev.x, y: ev.y });
         })
         .on('end', (ev) => {
           if (!ev.active) {
             this.layout.simulation.alphaTarget(0);
           }
+          this.event.onNodeDrag$.next({ data: ev.subject, type: 'dragend' });
           ev.subject.fx = null;
           ev.subject.fy = null;
         })
@@ -101,10 +107,15 @@ export class Controller {
     const zoomed = (ev) => {
       this.transform = ev.transform;
       this.renderer.setTransform(this.transform);
+      this.event.setTransform(this.transform);
       this.renderer.draw(this.tick$.value);
     };
     this.zoom = (zoom() as ISafeAny).scaleExtent([1 / 6, 36]).on('zoom', zoomed);
     select(this.canvas).call(this.zoom).call(this.zoom.transform, zoomIdentity).on('dblclick', null);
+  }
+
+  initEvent() {
+    this.event = new Event(this.canvas);
   }
 
   /**
